@@ -28,6 +28,17 @@ export interface DbcMessage {
   signals: DbcSignal[];
 }
 
+export interface SignalPoint {
+  time: number;
+  value: number;
+}
+
+export interface SignalSeries {
+  name: string;
+  unit: string;
+  data: SignalPoint[];
+}
+
 export interface BusStats {
   totalFrames: number;
   rxCount: number;

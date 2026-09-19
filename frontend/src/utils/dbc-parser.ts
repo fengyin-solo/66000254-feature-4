@@ -121,15 +121,10 @@ BO_ 2015 OBD_Request: 8 ECU
 
 BO_ 2024 OBD_Response_Engine: 8 ECU
  SG_ EngineRPM : 0|16@1+ (0.25,0) [0|16383.75] "rpm" Dashboard
- SG_ VehicleSpeed : 16|8@1+ (1,0) [0|255] "km/h" Dashboard
- SG_ CoolantTemp : 24|8@1+ (1,-40) [-40|215] "degC" Dashboard
- SG_ ThrottlePosition : 32|8@1+ (0.392,0) [0|100] "%" Dashboard
- SG_ EngineLoad : 40|8@1+ (0.392,0) [0|100] "%" Dashboard
+ SG_ ThrottlePosition : 16|8@1+ (0.392,0) [0|100] "%" Dashboard
+ SG_ EngineLoad : 24|8@1+ (0.392,0) [0|100] "%" Dashboard
 
-BO_ 2025 OBD_Response_Transmission: 8 ECU
- SG_ EngineRPM : 0|16@1+ (0.25,0) [0|16383.75] "rpm" Dashboard
- SG_ VehicleSpeed : 16|8@1+ (1,0) [0|255] "km/h" Dashboard
- SG_ CoolantTemp : 24|8@1+ (1,-40) [-40|215] "degC" Dashboard
- SG_ ThrottlePosition : 32|8@1+ (0.392,0) [0|100] "%" Dashboard
- SG_ EngineLoad : 40|8@1+ (0.392,0) [0|100] "%" Dashboard
+BO_ 2025 OBD_Response_Vehicle: 8 ECU
+ SG_ VehicleSpeed : 0|8@1+ (1,0) [0|255] "km/h" Dashboard
+ SG_ CoolantTemp : 8|8@1+ (1,-40) [-40|215] "degC" Dashboard
 `;
