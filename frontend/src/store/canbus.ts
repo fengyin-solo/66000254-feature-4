@@ -1,9 +1,23 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { CanFrame, DbcMessage, BusStats } from '../types';
 import { parseDbc, decodeCanFrame, DEFAULT_DBC_CONTENT } from '../utils/dbc-parser';
 
 let frameIdCounter = 0;
+
+const SELECTED_SIGNALS_KEY = 'canbus:selectedSignals';
+
+function loadSelectedSignals(): string[] {
+  try {
+    const raw = localStorage.getItem(SELECTED_SIGNALS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x): x is string => typeof x === 'string');
+  } catch {
+    return [];
+  }
+}
 
 export const useCanBusStore = defineStore('canbus', () => {
   const frames = ref<CanFrame[]>([]);
@@ -13,6 +27,17 @@ export const useCanBusStore = defineStore('canbus', () => {
   const filterText = ref('');
   const isCapturing = ref(false);
   const pollInterval = ref<number | null>(null);
+
+  // 用户在趋势图中挑选的信号（默认空，持久化到 localStorage，重开窗口后恢复）
+  const selectedSignals = ref<string[]>(loadSelectedSignals());
+
+  watch(selectedSignals, (val) => {
+    try {
+      localStorage.setItem(SELECTED_SIGNALS_KEY, JSON.stringify(val));
+    } catch {
+      // localStorage 不可用时忽略，选择仍保留在内存中
+    }
+  }, { deep: true });
 
   const busStats = ref<BusStats>({
     totalFrames: 0,
@@ -51,6 +76,55 @@ export const useCanBusStore = defineStore('canbus', () => {
   const busLoadPercent = computed(() => {
     return busStats.value.busLoad.toFixed(1);
   });
+
+  // 可挑选的信号：DBC 定义中的信号（按定义顺序）+ 实际采到但不在 DBC 中的信号
+  const availableSignals = computed(() => {
+    const names: string[] = [];
+    const seen = new Set<string>();
+    for (const msg of dbcMessages.value.values()) {
+      for (const sig of msg.signals) {
+        if (!seen.has(sig.name)) {
+          seen.add(sig.name);
+          names.push(sig.name);
+        }
+      }
+    }
+    for (const name of signals.value.keys()) {
+      if (!seen.has(name)) {
+        seen.add(name);
+        names.push(name);
+      }
+    }
+    return names;
+  });
+
+  // 信号单位表（来自 DBC 定义）
+  const signalUnits = computed(() => {
+    const map = new Map<string, string>();
+    for (const msg of dbcMessages.value.values()) {
+      for (const sig of msg.signals) {
+        if (!map.has(sig.name)) map.set(sig.name, sig.unit);
+      }
+    }
+    return map;
+  });
+
+  function toggleSignal(name: string) {
+    const idx = selectedSignals.value.indexOf(name);
+    if (idx >= 0) {
+      selectedSignals.value.splice(idx, 1);
+    } else {
+      selectedSignals.value.push(name);
+    }
+  }
+
+  function selectAllSignals() {
+    selectedSignals.value = [...availableSignals.value];
+  }
+
+  function clearSelectedSignals() {
+    selectedSignals.value = [];
+  }
 
   function addFrame(frame: CanFrame) {
     frames.value.push(frame);
@@ -202,8 +276,11 @@ export const useCanBusStore = defineStore('canbus', () => {
     dbcMessages,
     filterId,
     filterText,
-    busStats,
     isCapturing,
+    selectedSignals,
+    availableSignals,
+    signalUnits,
+    busStats,
     filteredFrames,
     busLoadPercent,
     addFrame,
@@ -213,6 +290,9 @@ export const useCanBusStore = defineStore('canbus', () => {
     startCapture,
     stopCapture,
     decodeFrame,
-    exportFrames
+    exportFrames,
+    toggleSignal,
+    selectAllSignals,
+    clearSelectedSignals
   };
 });
